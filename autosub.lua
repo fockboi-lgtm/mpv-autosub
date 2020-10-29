@@ -3,7 +3,8 @@
 --=============================================================================
 --          This script uses Subliminal to download subtitles,
 --          so make sure to specify your system's Subliminal location below:
-local subliminal = '/opt/anaconda3/bin/subliminal'
+-- https://github.com/davidde/mpv-autosub
+local subliminal = '/home/superman/.local/bin/subliminal'
 --=============================================================================
 -->>    SUBTITLE LANGUAGE:
 --=============================================================================
@@ -14,8 +15,8 @@ local languages = {
 --          If subtitles are found for the first language,
 --          other languages will NOT be downloaded,
 --          so put your preferred language first:
-            { 'English', 'en', 'eng' },
-            { 'Dutch', 'nl', 'dut' },
+            { 'English', 'en', 'eng' }
+--          { 'Dutch', 'nl', 'dut' },
 --          { 'Spanish', 'es', 'spa' },
 --          { 'French', 'fr', 'fre' },
 --          { 'German', 'de', 'ger' },
@@ -93,11 +94,21 @@ function download_subs(language)
         a[#a + 1] = 'utf-8'
     end
 
+
     a[#a + 1] = '-l'
     a[#a + 1] = language[2]
     a[#a + 1] = '-d'
     a[#a + 1] = directory
     a[#a + 1] = filename --> Subliminal command ends with the movie filename.
+
+
+    if directory:find('^http') then
+        a[#a + 1] = '-l'
+        a[#a + 1] = language[2]
+        a[#a + 1] = '-d'
+        a[#a + 1] = '/tmp' 
+        a[#a + 1] = filename --> Subliminal command ends with the movie filename.
+    end
 
     local result = utils.subprocess(table)
 
@@ -111,6 +122,7 @@ function download_subs(language)
         return true
     else
         log('No ' .. language[1] .. ' subtitles found\n')
+        mp.commandv('rescan_external_files')
         return false
     end
 end
@@ -123,7 +135,7 @@ end
 -- Control function: only download if necessary
 function control_downloads()
     -- Make MPV accept external subtitle files with language specifier:
-    mp.set_property('sub-auto', 'fuzzy')
+    mp.set_property('sub-auto', 'all')
     -- Set subtitle language preference:
     mp.set_property('slang', languages[1][2])
     mp.msg.warn('Reactivate external subtitle files:')
